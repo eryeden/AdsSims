@@ -93,6 +93,7 @@ add_definitions(-DIMAGE_DIR="${PROJECT_SOURCE_DIR}/MovieDir/")
 #Subdirectories
 add_subdirectory(ActiveRotator)
 add_subdirectory(CoupledOscillator)
+add_subdirectory(OV)
 
 
 
