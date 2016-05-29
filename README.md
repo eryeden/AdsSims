@@ -1,1 +1,2 @@
-# GLFW_tmp
+# AdsSims
+see LICENSE
