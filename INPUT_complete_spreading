@@ -1,6 +1,6 @@
 INPUT_DIR .
 INPUT 
-MovieDir/temp_*.ppm [00001-00435]
+MovieDir/temp_*.ppm [00001-01811]
 END_INPUT
 OUTPUT out.mpeg
 INPUT_CONVERT *

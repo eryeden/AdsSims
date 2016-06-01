@@ -12,91 +12,7 @@
 
 #include <World.hpp>
 
-
-//const unsigned int N = 10;
-//
-//struct AA{
-//    double x1, x2;
-//};
-//
-//AA cars[N];
-//
-//
-//const double L = 10.0;
-//
-///*
-// * 0, 1, 2 .... , N-1
-// * AA AA AA       AA
-// *
-// */
-//
-//double GetDelta(AA cars_[], unsigned int zibunn){
-//    double deltax;
-//
-//    /*
-//     * 自分がいちばん先か調べる
-//     */
-//    bool is_sakittyo = true;
-//    for(int i = 0; i < N; ++i){
-//        if(cars_[i].x1 > cars_[zibunn].x1){
-//            is_sakittyo = false;
-//            break;
-//        }
-//    }
-//
-//    if(is_sakittyo == true){
-//        /*
-//         * 自分が先っちょの場合、一番後ろの車との車間距離を計算
-//         */
-//
-//        /*
-//         * 一番後ろの車両を見つける
-//         */
-//
-//        /*
-//         * 自分と、一番うろの車両との距離を計算　→　デルタX
-//         */
-//
-//        deltax = cars_[zibunn+1].x1 - cars_[zibunn].x1 + L;
-//
-//    }else{
-//        /*
-//         * 自分が先っちょでない場合、一つ先の車との車間距離を見る
-//         */
-//
-//        /*
-//         * ひとつ先の車両との距離を計算
-//         */
-//
-//        deltax = cars_[zibunn+1].x1 - cars_[zibunn].x1;
-//
-//    }
-//
-//    return deltax;
-//}
-
-
-
 using namespace glm;
-
-double update_fps_counter(GLFWwindow* _window)
-{
-    static double previous_seconds = glfwGetTime();
-    static int frame_count;
-    static double fps = 0;
-    double current_seconds = glfwGetTime();
-    double elapsed_seconds = current_seconds-previous_seconds;
-    if (elapsed_seconds>0.25) {
-        previous_seconds = current_seconds;
-        fps = (double) frame_count/elapsed_seconds;
-        char tmp[128];
-        sprintf(tmp, "@ fps: %.2f", fps);
-        glfwSetWindowTitle(_window, tmp);
-        frame_count = 0;
-    }
-    frame_count++;
-    return fps;
-}
 
 class Vec2 {
 
@@ -131,6 +47,9 @@ public:
     };
 };
 
+/*
+ * 自立分散システムを簡単に扱えるようにしたつもりです
+ */
 template<typename T, typename Q>
 class Ads {
 public:
@@ -153,10 +72,12 @@ public:
         tmp2.resize(SegmentQty);
     };
 
+    /*
+     * RK4
+     */
     void Update()
     {
         unsigned int i = 0;
-
 
         g(Time, X, P);
         for (i = 0; i<SegmentQty; ++i) {
@@ -182,32 +103,17 @@ public:
         }
 
         for (i = 0; i<SegmentQty; ++i) {
-            X[i] = (K1[i] + K2[i] * 2.0 + K3[i] * 2.0 + K4[i]) / 6.0 * Dt + X[i];
+            X[i] = (K1[i]+K2[i]*2.0+K3[i]*2.0+K4[i])/6.0*Dt+X[i];
         }
         Time += Dt;
     };
 
     /*
-     * マルチスレッドなUpdateの実装
+     * マルチスレッドなUpdateの実装 どうも速度でない
      */
     void MTUpdate()
     {
         unsigned int i = 0;
-
-//        std::thread サンプル
-//        auto result = std::async(std::launch::async, [] { return long_calc(); });
-//        do_another_things();
-//        std::cout << result.get() << std::endl;
-
-//        std::future<std::vector<T>> cc1 = std::async(std::launch::async, f, Time, 1, X, P);
-//        std::vector<T> tttmp = cc1.get();
-
-
-//        g(Time, X, P);
-//        for (i = 0; i<SegmentQty; ++i) {
-//            K1[i] = f(Time, i, X, P);
-//            tmp1[i] = K1[i]*0.5*Dt+X[i];
-//        }
 
         g(Time, X, P);
         std::vector<std::future<T>> fk1, fk2, fk3, fk4;
@@ -220,10 +126,6 @@ public:
         }
 
         g(Time, tmp1, P);
-//        for (i = 0; i<SegmentQty; ++i) {
-//            K2[i] = f(Time+0.5*Dt, i, tmp1, P);
-//            tmp2[i] = K2[i]*0.5*Dt+X[i];
-//        }
         for (i = 0; i<SegmentQty; ++i) {
             fk2.push_back(std::async(std::launch::async, &Ads::f, this, Time, i, tmp1, P));
         }
@@ -232,12 +134,7 @@ public:
             tmp2[i] = K2[i]*0.5*Dt+X[i];
         }
 
-
         g(Time, tmp2, P);
-//        for (i = 0; i<SegmentQty; ++i) {
-//            K3[i] = f(Time+0.5*Dt, i, tmp2, P);
-//            tmp1[i] = K3[i]*0.5*Dt+X[i];
-//        }
         for (i = 0; i<SegmentQty; ++i) {
             fk3.push_back(std::async(std::launch::async, &Ads::f, this, Time, i, tmp2, P));
         }
@@ -246,12 +143,7 @@ public:
             tmp1[i] = K3[i]*0.5*Dt+X[i];
         }
 
-
-
         g(Time, tmp1, P);
-//        for (i = 0; i<SegmentQty; ++i) {
-//            K4[i] = f(Time+Dt, i, tmp1, P);
-//        }
         for (i = 0; i<SegmentQty; ++i) {
             fk4.push_back(std::async(std::launch::async, &Ads::f, this, Time, i, tmp1, P));
         }
@@ -259,13 +151,11 @@ public:
             K4[i] = fk4[i].get();
         }
 
-
         for (i = 0; i<SegmentQty; ++i) {
-            X[i] = (K1[i] + K2[i] * 2.0 + K3[i] * 2.0 + K4[i]) / 6.0 * Dt + X[i];
+            X[i] = (K1[i]+K2[i]*2.0+K3[i]*2.0+K4[i])/6.0*Dt+X[i];
         }
         Time += Dt;
     };
-
 
     void SetSegmentState(const unsigned int idx_, const T& state_)
     {
@@ -295,7 +185,7 @@ public:
             const double t_, const unsigned int idx_, const std::vector<T>& X_, const std::vector<Q>& P_
     ) = 0;
 
-    //全体処理？
+    //全体処理 初期処理、グローバルなエフェクトの計算に用いる
     virtual void g(
             const double t_, const std::vector<T>& X_, const std::vector<Q>& P_
     ) = 0;
@@ -368,11 +258,11 @@ public:
 //        return out;
     };
 
-
     //全体処理？
     void g(
-            const double t_, const std::vector<Vec2>& X_, const std::vector<double *>& P_
-    ){
+            const double t_, const std::vector<Vec2>& X_, const std::vector<double*>& P_
+    )
+    {
         cars_map = MakeMap(X_);
     };
 
@@ -391,19 +281,6 @@ public:
         double deltax; //前の車との距離
         double v; //目標速度
 
-        //冗長なコード
-//        //前の車を探して今との差を取る
-//        std::vector<unsigned int> cmap = MakeMap(X_);
-//        auto cloc = std::find(std::begin(cmap), std::end(cmap), idx_); //現在位置
-//        if(cloc != cmap.begin()){
-//            deltax = X_[*(cloc-1)].x - X_[*cloc].x;
-//        }else{
-//            //一番最後の要素を参照 std::endは使わない
-//            deltax = X_[cmap[GetSegmentsQty()-1]].x + FieldWidth - X_[*cloc].x;
-//        }
-
-        //前の車を探して今との差を取る
-//        deltax = GetDeltaX(idx_, X_);
         deltax = GetDeltaXFromMap(idx_, cars_map, X_);
 
         v = v0*(tanh(kpa*(deltax-d))+tanh(kpa*d));
@@ -424,13 +301,11 @@ public:
         auto cloc = std::find(std::begin(cmap), std::end(cmap), idx_); //現在位置
         if (cloc!=cmap.begin()) {
 
-//            std::cout << idx_ << "<A>" << std::endl;
             deltax = X_[*(cloc-1)].x-X_[*cloc].x;
 
         }
         else {
 
-//            std::cout << idx_ << "<B>" << *(std::end(cmap)) << std::endl;
             deltax = X_[cmap[GetSegmentsQty()-1]].x+FieldWidth-X_[*cloc].x;
 
         }
@@ -438,19 +313,18 @@ public:
         return deltax;
     };
 
-    double GetDeltaXFromMap(const unsigned int idx_, const std::vector<unsigned int> & cmap, const std::vector<Vec2>& X_){
+    double GetDeltaXFromMap(const unsigned int idx_, const std::vector<unsigned int>& cmap, const std::vector<Vec2>& X_)
+    {
         double deltax; //前の車との距離
 
         auto cloc = std::find(std::begin(cmap), std::end(cmap), idx_); //現在位置
         if (cloc!=cmap.begin()) {
 
-//            std::cout << idx_ << "<A>" << std::endl;
             deltax = X_[*(cloc-1)].x-X_[*cloc].x;
 
         }
         else {
 
-//            std::cout << idx_ << "<B>" << *(std::end(cmap)) << std::endl;
             deltax = X_[cmap[GetSegmentsQty()-1]].x+FieldWidth-X_[*cloc].x;
 
         }
@@ -459,7 +333,7 @@ public:
     }
 
     /*
-     * 車マップの作成 Moveセマンティクス
+     * 車マップの作成
      * 系全体の車位置、速度データであるXから、
      * 車のIDであるインデックス情報を使って
      * インデックスからなる車位置関係マップを作る
@@ -513,15 +387,16 @@ public:
     void ApplyPeriodicBoundaryCondition()
     {
 
-        for(unsigned int i = 0; i < GetSegmentsQty(); ++i){
-            if(GetSegmentState(i).x > FieldWidth){
-                SetSegmentState(i, Vec2(GetSegmentState(i).x - FieldWidth, GetSegmentState(i).y));
+        for (unsigned int i = 0; i<GetSegmentsQty(); ++i) {
+            if (GetSegmentState(i).x>FieldWidth) {
+                SetSegmentState(i, Vec2(GetSegmentState(i).x-FieldWidth, GetSegmentState(i).y));
             }
         }
 
     }
 
-    bool IsCrashed(){
+    bool IsCrashed()
+    {
 
         bool is_crashed = false;
 
@@ -529,22 +404,22 @@ public:
         std::vector<unsigned int> map_pres;
         map_pres.resize(GetSegmentsQty());
         unsigned int zero_idx = 0;
-        for(unsigned int i = 0; i < GetSegmentsQty(); ++i){
-            if(cars_map[i] == 0){
+        for (unsigned int i = 0; i<GetSegmentsQty(); ++i) {
+            if (cars_map[i]==0) {
                 zero_idx = i;
                 break;
             }
         }
 
         //ゼロインデックスで並べ替える
-        for(unsigned int i = 0; i < GetSegmentsQty(); ++i){
-            map_pres[i] = cars_map[(i + zero_idx) % GetSegmentsQty()];
+        for (unsigned int i = 0; i<GetSegmentsQty(); ++i) {
+            map_pres[i] = cars_map[(i+zero_idx)%GetSegmentsQty()];
         }
 
 
         //前の車マップと比較
-        for(unsigned int i = 0; i < GetSegmentsQty(); ++i){
-            if(map_pres[i] != cars_map_prev[i]){
+        for (unsigned int i = 0; i<GetSegmentsQty(); ++i) {
+            if (map_pres[i]!=cars_map_prev[i]) {
                 is_crashed = true;
                 break;
             }
@@ -555,7 +430,8 @@ public:
         return is_crashed;
     };
 
-    void Init(){
+    void Init()
+    {
         g(0, GetSegments(), GetParameters());
         cars_map_prev = MakeMap(GetSegments());
         IsCrashed();
@@ -574,78 +450,151 @@ private:
 };
 
 
+//FPSの計測
+double update_fps_counter(GLFWwindow* _window)
+{
+    static double previous_seconds = glfwGetTime();
+    static int frame_count;
+    static double fps = 0;
+    double current_seconds = glfwGetTime();
+    double elapsed_seconds = current_seconds-previous_seconds;
+    if (elapsed_seconds>0.25) {
+        previous_seconds = current_seconds;
+        fps = (double) frame_count/elapsed_seconds;
+        char tmp[128];
+        sprintf(tmp, "@ fps: %.2f", fps);
+        glfwSetWindowTitle(_window, tmp);
+        frame_count = 0;
+    }
+    frame_count++;
+    return fps;
+}
+
+//HSVからRGBを出力
+vec3 HSV2RGB(vec3 hsv){
+    float h = hsv.x;
+    float s = hsv.y;
+    float v = hsv.z;
+    float r = v;
+    float g = v;
+    float b = v;
+    if (s > 0.0f) {
+        h *= 6.0f;
+        int i = (int) h;
+        float f = h - (float) i;
+        switch (i) {
+        default:
+        case 0:
+            g *= 1 - s * (1 - f);
+            b *= 1 - s;
+            break;
+        case 1:
+            r *= 1 - s * f;
+            b *= 1 - s;
+            break;
+        case 2:
+            r *= 1 - s;
+            b *= 1 - s * (1 - f);
+            break;
+        case 3:
+            r *= 1 - s;
+            g *= 1 - s * f;
+            break;
+        case 4:
+            r *= 1 - s * (1 - f);
+            g *= 1 - s;
+            break;
+        case 5:
+            g *= 1 - s;
+            b *= 1 - s * f;
+            break;
+        }
+    }
+    return vec3(r, g, b);
+}
+
 int simcount = 10;
 
-//イベントハンドラ コールバック関数 これは静的に宣言された関数であるが、これはヘッダファイルでstaticな定義がなされているため、実装部においてはstaticであるとはしてはならない
-void key_callback(GLFWwindow* window_, int key_, int scancode_, int action_, int mode_){
-    // When a user presses the escape key, we set the WindowShouldClose property to true,
-    // closing the application
-    if(key_ == GLFW_KEY_ESCAPE && action_ == GLFW_PRESS) {
+//イベントハンドラ コールバック関数 好みの処理を追加
+void key_callback(GLFWwindow* window_, int key_, int scancode_, int action_, int mode_)
+{
+    if (key_==GLFW_KEY_ESCAPE && action_==GLFW_PRESS) {
         glfwSetWindowShouldClose(window_, GL_TRUE);
-    } else if(key_ == GLFW_KEY_UP && action_ == GLFW_PRESS){
+    }
+    else if (key_==GLFW_KEY_UP && action_==GLFW_PRESS) {
         simcount += 10;
-    } else if(key_ == GLFW_KEY_DOWN && action_ == GLFW_PRESS){
+    }
+    else if (key_==GLFW_KEY_DOWN && action_==GLFW_PRESS) {
         simcount -= 10;
-        if(simcount <= 0){
+        if (simcount<=0) {
             simcount = 10;
         }
-    }else if(key_ == GLFW_KEY_A && action_ == GLFW_PRESS){
+    }
+    else if (key_==GLFW_KEY_A && action_==GLFW_PRESS) {
         simcount -= 10;
-        if(simcount <= 0){
+        if (simcount<=0) {
             simcount = 10;
         }
     }
 }
 
+
 int main()
 {
     /*
-     * 描画関連
+     * 描画関連 ##############################################################################
      */
 
-    world::Window wd(800, 600, "Test");
+    //Windowオブジェクトの生成
+    world::Window wd(800, 600, "OV");
+
+    //キー入力時に呼ばれる関数を設定
     wd.SetKeyCallBack(key_callback);
-    //wd.EnableFrameCapturing();
+
+    //出力結果キャプチャを有効化
+    wd.EnableFrameCapturing();
+
+    //表示エリアの広さを設定
     wd.SetVisibleArea(10);
+
+    //表示エリアの中心座標を設定
     wd.SetCenterPoint(vec2(10, 0));
 
-    //単位円
-    int no_p_uc = 100;
-    std::vector<vec2> unit_circle;
-    unit_circle.resize(no_p_uc+2);
-    for (int i = 0; i<(no_p_uc+2); ++i) {
-        unit_circle[i].x = cos(2.0*M_PI/(double) no_p_uc*(double) i);
-        unit_circle[i].y = sin(2.0*M_PI/(double) no_p_uc*(double) i);
-    }
-    world::Line line_uc(unit_circle);
-
-    //w_aの線
-    std::vector<vec2> w_a;
-    w_a.push_back(vec2(0, 10));
-    w_a.push_back(vec2(0, -10));
-    world::Line line_w_a(w_a);
-
+    //車両位置の点:半径0.2, 円周分割数50
     world::Circle ccl(0.2, 50);
 
+    /*
+     * テキスト描画用 いろんなフォントにできます
+     */
 //    world::Text tu(wd);
 //    world::Text tu(wd, world::Constants::DEFAULT_FONT_PATH_PREFIX + "ProggyClean.ttf");
     world::Text tu(wd, world::Constants::DEFAULT_FONT_PATH_PREFIX+"Inconsolata-Regular.ttf");
+    char buff[128];
 
+    //FPSの計測用
     double fps = 0;
     std::string buff_fps = "0";
-    char buff[128];
+
+    //クルマ位置を示す点描画時の色
+    vec3 color;
+
+    /*
+     * #####################################################################################
+     */
 
 
     /*
-     * シミュレーション
+     * シミュレーション関連#################################################################
      */
-
-    vec3 color;
 
     double a, v0, kpa, d;
     double param[4];
 
-    a = 1; //感応度 qty = 10, L = 10のとき
+    /*
+     * OVモデルパラメータ設定
+     */
+
+    a = 1; //感応度 qty = 10, L = 20のとき
     v0 = 1; //目標最高速度
     kpa = 1; //フィッティング用？
     d = 2; //目標速度整形
@@ -660,115 +609,93 @@ int main()
 //    kpa = 1; //フィッティング用？
 //    d = 2; //目標速度整形
 
-
     param[0] = a;
     param[1] = v0;
     param[2] = kpa;
     param[3] = d;
 
-
-    unsigned int carsqty = 10;
-    double dt = 1.0/100.0;
+    unsigned int carsqty = 30; //車台数
+    double dt = 1.0/100.0; //タイムステップ
     double t = 0;
-    double fw = 20;
+    double fw = 60; //フィールド幅
 
-    wd.SetVisibleArea(fw);
+    //表示範囲を適切に設定
+    wd.SetVisibleArea(fw*0.4);
     wd.SetCenterPoint(vec2(fw/2.0, 0));
 
+    //OVオブジェクトの生成
     OV ov(carsqty, dt, fw);
 
-    for(unsigned int i = 0; i < ov.GetSegmentsQty(); ++i){
-        ov.SetSegmentState(i, Vec2(static_cast<double>(i) * fw / ov.GetSegmentsQty(), 0));
+    //車の台数分パラメータ、初期状態を設定
+    for (unsigned int i = 0; i<ov.GetSegmentsQty(); ++i) {
+        ov.SetSegmentState(i, Vec2(static_cast<double>(i)*fw/ov.GetSegmentsQty(), 0));
         ov.SetSegmentParameter(i, param);
     }
+    //一番端っこの車に摂動を与える
     ov.SetSegmentState(0, Vec2(0.1, 0));
-
+    //初期化
     ov.Init();
 
-//    ov.SetSegmentState(0, Vec2(0, 4));
-//    ov.SetSegmentState(1, Vec2(2, 0));
-//    ov.SetSegmentState(2, Vec2(4, 0));
-//    ov.SetSegmentState(3, Vec2(6, 0));
-//    ov.SetSegmentState(4, Vec2(8, 0));
-
-
-///*
-// * OV mapping test
-// */
-//    std::vector<unsigned int> mp;
-//    mp = ov.MakeMap(ov.GetSegments());
-//
-//    for(auto d: mp){
-//        std::cout << d << " : " << ov.GetSegmentState(d).x << std::endl;
-//    }
-//    std::cout << "END : " << mp[ov.GetSegmentsQty()-1] <<  std::endl;
-//
-    for(unsigned int i = 0; i < ov.GetSegmentsQty(); ++i){
+    for (unsigned int i = 0; i<ov.GetSegmentsQty(); ++i) {
         std::cout << i << " : " << ov.GetDeltaX(i, ov.GetSegments()) << std::endl;
     }
+
+    /*
+     * #####################################################################################
+     */
 
 
 
     /*
-     * 描画、シミュレーションループ
+     * 描画、シミュレーションループ ここでシミュレーションを行い、描画する
      */
 
     while (wd.IsClose()) {
+        //キー入力を処理
         wd.HandleEvent();
 
+        //背景の塗りつぶし
         wd.ClearColor(0.7f, 0.7f, 0.7f);
 
-        //単位円の描画
-        //wd.Draw(line_uc, vec2(0, 0), vec3(0, 0, 0), 0.003);
-
-        for(unsigned int i = 0; i < ov.GetSegmentsQty(); ++i){
-            color = vec3((float)i / (float)ov.GetSegmentsQty(), 1.0 - (float)i / (float)ov.GetSegmentsQty(), (float)i / (float)ov.GetSegmentsQty());
-            wd.Draw(ccl, vec2(ov.GetSegmentState(i).x, 0), color);
+        //すべての車を描画
+        for (unsigned int i = 0; i<ov.GetSegmentsQty(); ++i) {
+            color = vec3((float) i/(float) ov.GetSegmentsQty(), 1, 1);
+            wd.Draw(ccl, vec2(ov.GetSegmentState(i).x, 0), HSV2RGB(color));
         }
 
-//        //黒丸の描画
-//        for(auto v: co.GetSegments()){
-//            wd.Draw(ccl, vec2(cos(v), sin(v)), vec3(0.8f, 0.2f, 0.2f));
-//        }
-//
-//        sprintf(buff, "FPS:%3.2f", fps);
-//        buff_fps = buff;
-//        tu.RenderText(buff_fps, glm::vec2(10, 10), glm::vec3(0.4f, 0.2f, 0.1f), 0.5);
-//
-//        sprintf(buff, "w = %2.2f, eps = %2.2f", param[0], param[1]);
-//        tu.RenderText(std::string(buff), glm::vec2(10, 50), glm::vec3(0.4f, 0.2f, 0.1f), 0.5);
-//
-//        sprintf(buff, "phi1:%3.3f, phi2:%3.3f, psi:%3.3f"
-//                , co.GetSegmentState(0), co.GetSegmentState(0), co.GetSegmentState(0) - co.GetSegmentState(1));
-//        tu.RenderText(std::string(buff), glm::vec2(10, 90), glm::vec3(0.4f, 0.2f, 0.1f), 0.5);
-//
-//        sprintf(buff, "time:%4.3f [s]", co.GetTime());
-//        tu.RenderText(std::string(buff), glm::vec2(10, 130), glm::vec3(0.4f, 0.2f, 0.1f), 0.5);
-//
-//        co.Update();
 
-
-
-        for(int i = 0; i < simcount; ++i) {
-//            ov.MTUpdate();
+        //シミュレーションを実行
+        for (int i = 0; i<simcount; ++i) {
             ov.Update();
             ov.ApplyPeriodicBoundaryCondition();
         }
 
-
-        for(unsigned int i = 0; i < ov.GetSegmentsQty(); ++i){
+        //車間距離の表示
+        for (unsigned int i = 0; i<ov.GetSegmentsQty(); ++i) {
             sprintf(buff, "%3d:%3.5f", i, ov.GetDeltaX(i, ov.GetSegments()));
-            tu.RenderText(std::string(buff), glm::vec2(10, 70 + (float)i * 10), glm::vec3(0.4f, 0.2f, 0.1f), 0.3);
+            tu.RenderText(std::string(buff), glm::vec2(10, 70+(float) i*10), glm::vec3(0.4f, 0.2f, 0.1f), 0.3);
         }
 
+        //FPSの表示
         sprintf(buff, "FPS:%3.2f", fps);
         buff_fps = buff;
         tu.RenderText(buff_fps, glm::vec2(10, 10), glm::vec3(0.4f, 0.2f, 0.1f), 0.5);
 
+        //経過時間の表示
         sprintf(buff, "Time: %4.3f", ov.GetTime());
         tu.RenderText(std::string(buff), glm::vec2(10, 50), glm::vec3(0.4f, 0.2f, 0.1f), 0.3);
 
-        if(ov.IsCrashed()){
+        //設定パラメータの表示
+        sprintf(buff, "a:%2.2f  v0:%2.2f  kappa:%2.2f  d:%2.2f", a, v0, kpa, d);
+        tu.RenderText(std::string(buff), glm::vec2(10, 40), glm::vec3(0.4f, 0.2f, 0.1f), 0.3);
+
+        //操作方法等info
+        sprintf(buff, "<UP/DOWN> to speed up/down");
+        tu.RenderText(std::string(buff), glm::vec2(200, 10), glm::vec3(0.4f, 0.2f, 0.1f), 0.4);
+
+
+        //追突した場合、停止
+        if (ov.IsCrashed()) {
             sprintf(buff, "Crashed");
             tu.RenderText(std::string(buff), glm::vec2(200, 50), glm::vec3(0.8f, 0.2f, 0.1f), 0.6);
 
@@ -777,10 +704,13 @@ int main()
             break;
         }
 
+        //FPSの計算
         fps = update_fps_counter(const_cast<GLFWwindow*>(wd.GetWindowContext()));
+        //ダブルバッファ
         wd.SwapBuffers();
     }
 
+    //何もしない, 終了待ち
     while (wd.IsClose()) {
         wd.HandleEvent();
     }
