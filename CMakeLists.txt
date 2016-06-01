@@ -48,7 +48,7 @@ set(GL_PKGLIBS ${OPENGL_LIBRARIES})
 #SET(GL_LIBS GL ${GLFW_STATIC_LIBRARIES} ${ASSIMP_LIBRARIES} ${GLEW_LIBRARIES})
 #SET(GL_LIBS ${GLFW_STATIC_LIBS} ${ASSIMP_LIBRARIES} ${GLEW_LIBRARIES})
 #SET(GL_LIBS ${GLFW_STATIC_LIBS} ${ASSIMPS_LIBS} ${GLEW_LIBS} ${GL_LIBS})
-SET(GL_LIBS ${GLFW_STATIC_LIBS} ${ASSIMPS_LIBS} ${GLEW_LIBS} ${GL_PKGLIBS})
+SET(GL_LIBS ${GLFW_STATIC_LIBS} ${ASSIMPS_LIBS} ${GLEW_LIBS} ${GL_PKGLIBS} pthread)
 #################################################################
 
 #################################################################
@@ -83,7 +83,7 @@ message(${GL_INCLUDE})
 file(GLOB COMMON_SRCS ${PROJECT_SOURCE_DIR}/Common/*.cpp)
 #################################################################
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3")
 
 #Directory configurations
 add_definitions(-DSHADER_PREFIX="${PROJECT_SOURCE_DIR}/Common/GLSL/")

@@ -53,6 +53,12 @@ namespace world{
     };
 
 
+    class KeyInterrupttion{
+    public:
+        virtual void KeyEvent() = 0;
+    private:
+
+    };
 
 
     /*
@@ -220,6 +226,12 @@ namespace world{
         const glm::mat4 GetProjection() const {return P;};
         const glm::mat4 GetProjectionOrtho() const {return P_ortho;};
         const glm::mat4 GetProjectionText() const {return P_text;};
+
+        void SetKeyCallBack(GLFWkeyfun cbfun){
+            // Register callback function
+            glfwSetKeyCallback(window, cbfun);
+            return;
+        };
 
     private:
 

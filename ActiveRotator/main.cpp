@@ -34,7 +34,9 @@ double update_fps_counter(GLFWwindow * _window) {
 
 //微分値の出力
 double f(double x, double w, double a){
-    return w - a * cos(x);
+    double phi_dot;
+    phi_dot = w - a * cos(x);
+    return phi_dot;
 }
 
 //RK4
@@ -42,11 +44,14 @@ double rk4(double x, double t, double dt, double param[]){
     double k1, k2, k3, k4;
     double w = param[0];
     double a = param[1];
+
     k1 = dt * f(x, w, a);
     k2 = dt * f(x + k1 * 0.5, w, a);
     k3 = dt * f(x + k2 * 0.5, w, a);
     k4 = dt * f(x + k3,       w, a);
+
     return (k1 + 2.0*k2 + 2.0*k3 + k4)/6.0 + x;
+
 }
 
 
@@ -62,8 +67,8 @@ int main()
     std::vector<vec2> unit_circle;
     unit_circle.resize(no_p_uc + 2);
     for(int i = 0; i < (no_p_uc + 2); ++i){
-        unit_circle[i].x = cos(2.0 * M_PI / (double)no_p_uc * (double)i);
-        unit_circle[i].y = sin(2.0 * M_PI / (double)no_p_uc * (double)i);
+        unit_circle[i].x = static_cast<float>(cos(2.0 * M_PI / (double)no_p_uc * (double)i));
+        unit_circle[i].y = static_cast<float>(sin(2.0 * M_PI / (double)no_p_uc * (double)i));
     }
     world::Line line_uc(unit_circle);
 
