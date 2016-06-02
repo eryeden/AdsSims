@@ -78,6 +78,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 add_definitions(-DSHADER_PREFIX="${PROJECT_SOURCE_DIR}/Common/GLSL/")
 add_definitions(-DFONTS_DIR_PREFIX="${PROJECT_SOURCE_DIR}/Fonts/")
 add_definitions(-DIMAGE_DIR="${PROJECT_SOURCE_DIR}/MovieDir/")
+add_definitions(-DPROJECT_ROOT_DIR="${PROJECT_SOURCE_DIR}/")
+
 
 #Subdirectories
 add_subdirectory(ActiveRotator)
@@ -85,6 +87,8 @@ add_subdirectory(CoupledOscillator)
 add_subdirectory(OV)
 
 
+#Delete All PPM files
+add_custom_target(cleanMD rm -rf ${PROJECT_SOURCE_DIR}/MovieDir/*ppm)
 
 
 

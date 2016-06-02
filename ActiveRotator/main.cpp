@@ -13,6 +13,7 @@
 
 using namespace glm;
 
+//FPSの計算
 double update_fps_counter(GLFWwindow * _window) {
     static double previous_seconds = glfwGetTime();
     static int frame_count;
@@ -57,12 +58,23 @@ double rk4(double x, double t, double dt, double param[]){
 
 int main()
 {
+
+    /*
+     * 描画関連 ##############################################################################
+     */
+    //Windowオブジェクトの生成
     world::Window wd(800, 600, "Test");
+
+    //出力結果キャプチャを有効化
 //    wd.EnableFrameCapturing();
-    wd.SetVisibleArea(10);
+
+    //表示エリアの広さの設定
+    wd.SetVisibleArea(5);
+
+    ///表示エリアの中心座標を設定
     wd.SetCenterPoint(vec2(0, 0));
 
-    //単位円
+    //単位円描画用
     int no_p_uc = 100;
     std::vector<vec2> unit_circle;
     unit_circle.resize(no_p_uc + 2);
@@ -72,23 +84,35 @@ int main()
     }
     world::Line line_uc(unit_circle);
 
-    //w_aの線
+    //x = w/a の線の描画用
     std::vector<vec2> w_a;
     w_a.push_back(vec2(0, 10));
     w_a.push_back(vec2(0, -10));
     world::Line line_w_a(w_a);
 
-
+    //車両位置の点:半径0.2, 円周分割数50
     world::Circle ccl(0.2, 50);
 
+    /*
+     * テキスト描画用 いろんなフォントにできます
+     */
 //    world::Text tu(wd);
 //    world::Text tu(wd, world::Constants::DEFAULT_FONT_PATH_PREFIX + "ProggyClean.ttf");
     world::Text tu(wd, world::Constants::DEFAULT_FONT_PATH_PREFIX + "Inconsolata-Regular.ttf");
 
-
+    //FPSの計測用
     double fps = 0;
     std::string buff_fps = "0";
     char buff[128];
+
+    /*
+     * #####################################################################################
+     */
+
+
+    /*
+     * シミュレーション関連#################################################################
+     */
 
     long i = 0;
 
@@ -103,10 +127,16 @@ int main()
     double dt = 1.0/60.0;
     double t = 0;
 
+    /*
+     * #####################################################################################
+     */
+
 
     while (wd.IsClose()) {
+        //キー入力を処理
         wd.HandleEvent();
 
+        //背景の塗りつぶし
         wd.ClearColor(0.7f, 0.7f, 0.7f);
 
         //単位円の描画
@@ -118,21 +148,25 @@ int main()
         //円の描画
         wd.Draw(ccl, vec2(cos(phi), sin(phi)), vec3(0.8f, 0.2f, 0.2f));
 
+        //FPSの表示
         sprintf(buff, "FPS:%3.2f", fps);
         buff_fps = buff;
         tu.RenderText(buff_fps, glm::vec2(10, 10), glm::vec3(0.4f, 0.2f, 0.1f), 0.5);
-
+        //バラメータの表示
         sprintf(buff, "w = %2.2f, a = %2.2f, phi:%3.3f [rad]", w, a, phi);
         tu.RenderText(std::string(buff), glm::vec2(10, 50), glm::vec3(0.4f, 0.2f, 0.1f), 0.5);
-
+        //経過時間の表示
         sprintf(buff, "time:%4.3f [s]", t);
         tu.RenderText(std::string(buff), glm::vec2(10, 90), glm::vec3(0.4f, 0.2f, 0.1f), 0.5);
 
-
+        //シミュレーション
         t += dt;
         phi = rk4(phi, t, dt, param);
 
+        //FPSの計算
         fps = update_fps_counter(const_cast<GLFWwindow *>(wd.GetWindowContext()));
+
+        //画面に表示
         wd.SwapBuffers();
     }
 

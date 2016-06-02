@@ -552,7 +552,7 @@ int main()
     wd.SetKeyCallBack(key_callback);
 
     //出力結果キャプチャを有効化
-    wd.EnableFrameCapturing();
+//    wd.EnableFrameCapturing();
 
     //表示エリアの広さを設定
     wd.SetVisibleArea(10);
@@ -614,7 +614,7 @@ int main()
     param[2] = kpa;
     param[3] = d;
 
-    unsigned int carsqty = 30; //車台数
+    unsigned int carsqty = 10; //車台数
     double dt = 1.0/100.0; //タイムステップ
     double t = 0;
     double fw = 60; //フィールド幅
@@ -706,7 +706,7 @@ int main()
 
         //FPSの計算
         fps = update_fps_counter(const_cast<GLFWwindow*>(wd.GetWindowContext()));
-        //ダブルバッファ
+        //画面に出力
         wd.SwapBuffers();
     }
 
