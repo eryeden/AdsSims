@@ -449,6 +449,37 @@ private:
 
 };
 
+
+/*
+ * ミミズモデル
+ */
+class EW : public Ads<Vec2, double*> {
+public:
+
+
+    EW(){;};
+
+    Vec2 f(const double t_, const unsigned int idx_, const std::vector<Vec2>& X_, const std::vector<double*>& P_
+    )
+    {
+
+
+
+        return Vec2(0, 0);
+
+    };
+
+    //全体処理？
+    void g(
+            const double t_, const std::vector<Vec2>& X_, const std::vector<double*>& P_
+    )
+    {
+        ;
+    };
+};
+
+
+
 //FPSの計測
 double update_fps_counter(GLFWwindow* _window)
 {

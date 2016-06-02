@@ -10,8 +10,8 @@ SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 #COMPILE COMMANDS configuration
-#set(CMAKE_C_COMPILER  /usr/local/bin/gcc-5.3)
-#set(CMAKE_CXX_COMPILER /usr/local/bin/g++-5.3)
+set(CMAKE_C_COMPILER  /usr/local/bin/gcc-5.3)
+set(CMAKE_CXX_COMPILER /usr/local/bin/g++-5.3)
 
 #Libraries configurations
 ##############################################################
@@ -72,7 +72,7 @@ file(GLOB COMMON_SRCS ${PROJECT_SOURCE_DIR}/Common/*.cpp)
 #################################################################
 
 #For C++11
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3")
 
 #Directory configurations
 add_definitions(-DSHADER_PREFIX="${PROJECT_SOURCE_DIR}/Common/GLSL/")
@@ -85,7 +85,7 @@ add_definitions(-DPROJECT_ROOT_DIR="${PROJECT_SOURCE_DIR}/")
 add_subdirectory(ActiveRotator)
 add_subdirectory(CoupledOscillator)
 add_subdirectory(OV)
-
+add_subdirectory(Earthworm)
 
 #Delete All PPM files
 add_custom_target(cleanMD rm -rf ${PROJECT_SOURCE_DIR}/MovieDir/*ppm)
